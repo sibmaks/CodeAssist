@@ -135,14 +135,7 @@ public class ProjectManagerFragment extends Fragment {
 
 
         mCreateProjectFab = view.findViewById(R.id.create_project_fab);
-        mCreateProjectFab.setOnClickListener(v -> {
-            WizardFragment wizardFragment = new WizardFragment();
-            wizardFragment.setOnProjectCreatedListener(this::openProject);
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, wizardFragment)
-                    .addToBackStack(null)
-                    .commit();
-        });
+        mCreateProjectFab.setOnClickListener(v -> showCreateProjectOptions());
         UiUtilsKt.addSystemWindowInsetToMargin(mCreateProjectFab, false, false, false, true);
 
         mAdapter = new ProjectManagerAdapter();
@@ -195,6 +188,29 @@ public class ProjectManagerFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void showCreateProjectOptions() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.project_manager_create_project_prompt)
+                .setItems(R.array.project_create_options, (dialog, which) -> {
+                    if (which == 0) {
+                        WizardFragment wizardFragment = new WizardFragment();
+                        wizardFragment.setOnProjectCreatedListener(this::openProject);
+                        getParentFragmentManager().beginTransaction()
+                                .replace(R.id.fragment_container, wizardFragment)
+                                .addToBackStack(null)
+                                .commit();
+                    } else {
+                        CloneProjectFragment cloneProjectFragment = new CloneProjectFragment();
+                        cloneProjectFragment.setOnProjectClonedListener(this::openProject);
+                        getParentFragmentManager().beginTransaction()
+                                .replace(R.id.fragment_container, cloneProjectFragment)
+                                .addToBackStack(null)
+                                .commit();
+                    }
+                })
+                .show();
     }
 
     @Nullable
