@@ -73,6 +73,7 @@ public class ProjectManagerFragment extends Fragment {
     private String mPreviousPath;
 
     private FilePickerDialogFixed mDirectoryPickerDialog;
+    private Runnable mAfterSavePathSelection;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -98,7 +99,7 @@ public class ProjectManagerFragment extends Fragment {
             } else {
                 if (mShowDialogOnPermissionGrant) {
                     mShowDialogOnPermissionGrant = false;
-                    showDirectorySelectDialog();
+                    showDirectorySelectDialog(mAfterSavePathSelection);
                 }
             }
         });
@@ -135,14 +136,7 @@ public class ProjectManagerFragment extends Fragment {
 
 
         mCreateProjectFab = view.findViewById(R.id.create_project_fab);
-        mCreateProjectFab.setOnClickListener(v -> {
-            WizardFragment wizardFragment = new WizardFragment();
-            wizardFragment.setOnProjectCreatedListener(this::openProject);
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, wizardFragment)
-                    .addToBackStack(null)
-                    .commit();
-        });
+        mCreateProjectFab.setOnClickListener(v -> showCreateProjectDialog());
         UiUtilsKt.addSystemWindowInsetToMargin(mCreateProjectFab, false, false, false, true);
 
         mAdapter = new ProjectManagerAdapter();
@@ -216,7 +210,7 @@ public class ProjectManagerFragment extends Fragment {
         String path = mPreferences.getString(SharedPreferenceKeys.PROJECT_SAVE_PATH, null);
         if (path == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             if (permissionsGranted()) {
-                showDirectorySelectDialog();
+                showDirectorySelectDialog(null);
             } else if (shouldShowRequestPermissionRationale()) {
                 if (shouldShowRequestPermissionRationale()) {
                     new MaterialAlertDialogBuilder(requireContext())
@@ -255,7 +249,8 @@ public class ProjectManagerFragment extends Fragment {
         return mDirectoryPickerDialog;
     }
 
-    private void showDirectorySelectDialog() {
+    private void showDirectorySelectDialog(@Nullable Runnable afterSelection) {
+        mAfterSavePathSelection = afterSelection;
         DialogProperties properties = new DialogProperties();
         properties.selection_type = DialogConfigs.DIR_SELECT;
         properties.selection_mode = DialogConfigs.SINGLE_MODE;
@@ -267,7 +262,10 @@ public class ProjectManagerFragment extends Fragment {
         dialogFixed.setTitle(R.string.project_manager_save_location_title);
         dialogFixed.setDialogSelectionListener(files -> {
             setSavePath(files[0]);
-            loadProjects();
+            if (mAfterSavePathSelection != null) {
+                mAfterSavePathSelection.run();
+                mAfterSavePathSelection = null;
+            }
         });
         dialogFixed.setOnDismissListener(__ -> {
             mPreviousPath = dialogFixed.getCurrentPath();
@@ -276,6 +274,109 @@ public class ProjectManagerFragment extends Fragment {
         dialogFixed.show();
 
         mDirectoryPickerDialog = dialogFixed;
+    }
+
+    private void showCreateProjectDialog() {
+        CharSequence[] options = new CharSequence[]{
+                getString(R.string.project_manager_add_existing_project),
+                getString(R.string.project_manager_create_from_template)
+        };
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.project_manager_add_project_title)
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        showOpenExistingProjectDialog();
+                    } else {
+                        showTemplateLocationDialog();
+                    }
+                })
+                .show();
+    }
+
+    private void showOpenExistingProjectDialog() {
+        DialogProperties properties = new DialogProperties();
+        properties.selection_type = DialogConfigs.DIR_SELECT;
+        properties.selection_mode = DialogConfigs.SINGLE_MODE;
+        properties.root = Environment.getExternalStorageDirectory();
+        if (mPreviousPath != null && new File(mPreviousPath).exists()) {
+            properties.offset = new File(mPreviousPath);
+        }
+        FilePickerDialogFixed dialogFixed = new FilePickerDialogFixed(requireContext(), properties);
+        dialogFixed.setTitle(R.string.project_manager_open_existing_title);
+        dialogFixed.setDialogSelectionListener(files -> {
+            Project project = new Project(new File(files[0]));
+            openProject(project);
+        });
+        dialogFixed.setOnDismissListener(__ -> {
+            mPreviousPath = dialogFixed.getCurrentPath();
+        });
+        dialogFixed.show();
+    }
+
+    private void showTemplateLocationDialog() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.project_manager_save_new_project_title)
+                    .setMessage(R.string.project_manager_android11_notice)
+                    .setPositiveButton(R.string.project_manager_button_continue,
+                            (dialog, which) -> startTemplateWizard(true))
+                    .show();
+            return;
+        }
+
+        CharSequence[] options = new CharSequence[]{
+                getString(R.string.project_manager_save_internal),
+                getString(R.string.project_manager_save_external)
+        };
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.project_manager_save_new_project_title)
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        startTemplateWizard(true);
+                    } else {
+                        requestExternalTemplateLocation();
+                    }
+                })
+                .show();
+    }
+
+    private void requestExternalTemplateLocation() {
+        if (permissionsGranted()) {
+            showDirectorySelectDialog(() -> startTemplateWizard(false));
+            return;
+        }
+
+        if (shouldShowRequestPermissionRationale()) {
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setMessage(R.string.project_manager_permission_rationale)
+                    .setPositiveButton(R.string.project_manager_button_allow, (d, which) -> {
+                        mShowDialogOnPermissionGrant = true;
+                        mAfterSavePathSelection = () -> startTemplateWizard(false);
+                        requestPermissions();
+                    })
+                    .setNegativeButton(R.string.project_manager_button_use_internal,
+                            (d, which) -> startTemplateWizard(true))
+                    .setTitle(R.string.project_manager_rationale_title)
+                    .show();
+            return;
+        }
+
+        mShowDialogOnPermissionGrant = true;
+        mAfterSavePathSelection = () -> startTemplateWizard(false);
+        requestPermissions();
+    }
+
+    private void startTemplateWizard(boolean useInternalStorage) {
+        if (useInternalStorage) {
+            setSavePath(requireContext().getExternalFilesDir("Projects").getAbsolutePath());
+        }
+        WizardFragment wizardFragment = new WizardFragment();
+        wizardFragment.setUseInternalStorage(useInternalStorage);
+        wizardFragment.setOnProjectCreatedListener(this::openProject);
+        getParentFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, wizardFragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     private boolean permissionsGranted() {

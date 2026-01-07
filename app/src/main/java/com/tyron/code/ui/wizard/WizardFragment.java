@@ -100,6 +100,10 @@ public class WizardFragment extends Fragment {
             new ActivityResultContracts.RequestMultiplePermissions();
     private OnProjectCreatedListener mListener;
 
+    public void setUseInternalStorage(boolean useInternalStorage) {
+        mUseInternalStorage = useInternalStorage;
+    }
+
     public void setOnProjectCreatedListener(OnProjectCreatedListener listener) {
         mListener = listener;
     }
