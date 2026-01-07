@@ -218,9 +218,29 @@
     <string name="project_manager_projects">Projects</string>
     <string name="project_manager_empty">Projects are empty</string>`
     <string name="project_manager_create_project">Create module</string>
+    <string name="project_manager_create_project_prompt">Create a project</string>
     <string name="project_path_menu_title">Projects Path</string>
     <string name="project_manager_null_projects">No Projects Found</string>
     <string name="project_manager_suggestions">Suggestions:\n\n  - Create New Project\n  - Change Projects Path</string>
+
+    <string name="clone_project_title">Clone repository</string>
+    <string name="clone_project_description">Clone a Git repository to create a new project.</string>
+    <string name="clone_project_repo_url">Repository URL</string>
+    <string name="clone_project_repo_url_error">Enter a valid repository URL.</string>
+    <string name="clone_project_auth_title">Authentication</string>
+    <string name="clone_project_auth_none">None</string>
+    <string name="clone_project_auth_password">Login + password</string>
+    <string name="clone_project_auth_certificate">Certificate from file</string>
+    <string name="clone_project_username">Username</string>
+    <string name="clone_project_password">Password</string>
+    <string name="clone_project_certificate">Certificate path</string>
+    <string name="clone_project_choose_certificate">Choose certificate</string>
+    <string name="clone_project_cancel">Cancel</string>
+    <string name="clone_project_clone">Clone</string>
+    <string name="clone_project_target_exists">A project with this name already exists.</string>
+    <string name="clone_project_auth_missing">Provide username and password.</string>
+    <string name="clone_project_certificate_missing">Choose a certificate file.</string>
+    <string name="clone_project_certificate_not_found">Certificate file not found.</string>
     
 
     <!-- Compiler Service -->
