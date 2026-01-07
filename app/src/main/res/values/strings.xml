@@ -203,6 +203,13 @@
     <string name="project_manager_alpha_notice">CodeAssist is still in alpha,
         you may encounter crashes, bugs and incomplete features.\nYou
         can report these issues at https://github.com/tyron12233/CodeAssist/issues</string>
+    <string name="project_manager_add_project_title">Add project</string>
+    <string name="project_manager_add_existing_project">Add existing folder</string>
+    <string name="project_manager_create_from_template">Create from template</string>
+    <string name="project_manager_open_existing_title">Select project folder</string>
+    <string name="project_manager_save_new_project_title">Save new project</string>
+    <string name="project_manager_save_internal">Internal storage</string>
+    <string name="project_manager_save_external">External folder</string>
     <string name="project_manager_save_location_title">Select save location</string>
     <string name="project_manager_permission_denied">Permission denied</string>
     <string name="project_manager_button_request_again">Request again</string>
